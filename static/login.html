@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Shopping Mall</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Simple styles, same as register page */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 350px;
+            margin: 80px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0px 0px 10px #ccc;
+            border-radius: 8px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0069d9;
+        }
+        .error {
+            color: red;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            text-align: center;
+        }
+        p {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <div class="error" id="error"></div>
+        <input type="email" id="email" placeholder="Email (@gmail.com)">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="loginUser()">Login</button>
+        <p>
+            Don't have an account? <a href="/register">Register</a>
+        </p>
+    </div>
+
+    <script>
+        async function loginUser() {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = '';
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // ---------- FRONTEND VALIDATION ----------
+            if (!email || !password) {
+                errorDiv.textContent = "All fields are required";
+                return;
+            }
+
+            if (!email.endsWith("@gmail.com")) {
+                errorDiv.textContent = "Email must end with @gmail.com";
+                return;
+            }
+
+            try {
+                // ---------- SEND JSON TO BACKEND ----------
+                const res = await fetch('/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    // Backend returned an error
+                    errorDiv.textContent = data.detail || 'Login failed';
+                } else {
+                    alert("Login successful!");
+                    // You can save the token in localStorage if needed
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    // Redirect to dashboard/home page
+                    window.location.href = '/dashboard'; // Create dashboard page later
+                }
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = "Server error. Make sure FastAPI server is running.";
+            }
+        }
+    </script>
+</body>
+</html>
