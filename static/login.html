@@ -100,7 +100,7 @@
                     localStorage.setItem('token', data.access_token);
                     localStorage.setItem('user', JSON.stringify(data.user));
                     // Redirect to dashboard/home page
-                    window.location.href = '/dashboard'; // Create dashboard page later
+                    window.location.href = '/static/dashboard.html'; // Create dashboard page later
                 }
             } catch (err) {
                 console.error(err);

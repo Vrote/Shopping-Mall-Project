@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from app import database
 from app.models import user, shop
 from app.routes import user as user_routes, shop as shop_routes
+import os
 
 # Create database tables
 database.Base.metadata.create_all(bind=database.engine)
@@ -25,6 +26,13 @@ def register_page():
 @app.get("/login")
 def login_page():
     return FileResponse("static/login.html")
+
+
+
+@app.get("/dashboard")
+def dashboard():
+    return FileResponse(os.path.join("static", "dashboard.html"))
+
 
 # Root endpoint
 @app.get("/")
