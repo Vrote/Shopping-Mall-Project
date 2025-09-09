@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seller Shops - Shopping Mall</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; }
+        .container { width: 80%; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
+        h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #007BFF; color: white; }
+        button { padding: 5px 10px; margin: 2px; cursor: pointer; }
+        input { padding: 5px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>My Shops</h2>
+    <p id="welcome-msg"></p>
+
+    <h3>Add New Shop</h3>
+    <input type="text" id="shop-name" placeholder="Shop Name">
+    <input type="text" id="shop-location" placeholder="Shop Location">
+    <button onclick="addShop()">Add Shop</button>
+
+    <h3>Shop List</h3>
+    <table id="shop-table">
+        <thead>
+            <tr><th>ID</th><th>Name</th><th>Location</th><th>Actions</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button onclick="logout()">Logout</button>
+    <button onclick="goBack()">Back to Dashboard</button>
+</div>
+
+<script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    if(!user || !token) window.location.href = "login.html";
+    if(user.role !== "seller") window.location.href = "dashboard.html";
+
+    document.getElementById("welcome-msg").textContent = `Hello, ${user.name} (${user.role})`;
+
+    async function addShop() {
+        const name = document.getElementById("shop-name").value;
+        const location = document.getElementById("shop-location").value;
+
+        const res = await fetch("http://127.0.0.1:8000/shops/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ name, location })
+        });
+        if(res.ok) {
+            alert("Shop added successfully!");
+            loadMyShops();
+        } else {
+            const err = await res.json();
+            alert(err.detail || "Error adding shop");
+        }
+    }
+
+    async function loadMyShops() {
+        const res = await fetch("http://127.0.0.1:8000/shops/mine", {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const shops = await res.json();
+        const tbody = document.querySelector("#shop-table tbody");
+        tbody.innerHTML = "";
+        shops.forEach(s => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${s.id}</td>
+                <td><input type="text" id="name-${s.id}" value="${s.name}"></td>
+                <td><input type="text" id="location-${s.id}" value="${s.location}"></td>
+                <td>
+                    <button onclick="updateShop(${s.id})">Update</button>
+                    <button onclick="deleteShop(${s.id})">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    async function updateShop(id) {
+        const name = document.getElementById(`name-${id}`).value;
+        const location = document.getElementById(`location-${id}`).value;
+
+        const res = await fetch(`http://127.0.0.1:8000/shops/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ name, location })
+        });
+        if(res.ok) {
+            alert("Shop updated!");
+            loadMyShops();
+        } else {
+            const err = await res.json();
+            alert(err.detail || "Error updating shop");
+        }
+    }
+
+    async function deleteShop(id) {
+        const res = await fetch(`http://127.0.0.1:8000/shops/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if(res.ok) {
+            alert("Shop deleted!");
+            loadMyShops();
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "login.html";
+    }
+
+    function goBack() {
+        window.location.href = "dashboard.html";
+    }
+
+    loadMyShops();
+</script>
+</body>
+</html>

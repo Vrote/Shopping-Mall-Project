@@ -1,15 +1,20 @@
 from pydantic import BaseModel
+from typing import Optional
 
-class ShopCreate(BaseModel):
+class ShopBase(BaseModel):
     name: str
-    category: str
-    location: str | None = None
+    location: str
 
-class ShopOut(BaseModel):
+class ShopCreate(ShopBase):
+    pass
+
+class ShopUpdate(BaseModel):
+    name: Optional[str] = None
+    location: Optional[str] = None
+
+class ShopResponse(ShopBase):
     id: int
-    name: str
-    category: str
-    location: str | None = None
+    owner_id: int
 
     class Config:
         orm_mode = True

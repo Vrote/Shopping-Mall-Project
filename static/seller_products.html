@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Seller Product Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f9;
+    }
+    h2 {
+      color: #333;
+    }
+    form {
+      margin-bottom: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    input, select {
+      padding: 8px;
+      margin: 5px;
+    }
+    button {
+      padding: 8px 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .product-list {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .product {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    .product:last-child {
+      border-bottom: none;
+    }
+    .delete-btn {
+      background: red;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Manage Products</h2>
+
+  <!-- Add Product Form -->
+  <form id="productForm">
+    <select id="shopSelect"></select><br>
+    <input type="text" id="name" placeholder="Product Name" required><br>
+    <input type="number" id="price" placeholder="Price" required><br>
+    <input type="text" id="description" placeholder="Description"><br>
+    <button type="submit">Add Product</button>
+  </form>
+
+  <!-- Product List -->
+  <div class="product-list">
+    <h3>My Products</h3>
+    <div id="productsContainer"></div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Session expired. Please login again.");
+      window.location.href = "/login.html";
+    }
+
+    const shopSelect = document.getElementById("shopSelect");
+    const productForm = document.getElementById("productForm");
+    const productsContainer = document.getElementById("productsContainer");
+
+    // Load shops into dropdown
+    async function loadShops() {
+      const res = await fetch("/shops/mine", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const shops = await res.json();
+      shopSelect.innerHTML = shops.map(shop => `<option value="${shop.id}">${shop.name}</option>`).join("");
+    }
+
+    // Load products
+    async function loadProducts() {
+      const res = await fetch("/products/mine", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const products = await res.json();
+      productsContainer.innerHTML = products.map(p => `
+        <div class="product">
+          <strong>${p.name}</strong> - $${p.price} <br>
+          <em>${p.description || ""}</em>
+          <button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>
+        </div>
+      `).join("");
+    }
+
+    // Add product
+    productForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = {
+        name: document.getElementById("name").value,
+        price: parseInt(document.getElementById("price").value),
+        description: document.getElementById("description").value
+      };
+      const shopId = shopSelect.value;
+      await fetch(`/products/add/${shopId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+      productForm.reset();
+      loadProducts();
+    });
+
+    // Delete product
+    async function deleteProduct(id) {
+      await fetch(`/products/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      loadProducts();
+    }
+
+    // Initial load
+    loadShops();
+    loadProducts();
+  </script>
+</body>
+</html>
