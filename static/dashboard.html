@@ -1,35 +1,136 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dashboard - Shopping Mall</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; }
+        .container { width: 80%; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
+        h2 { color: #333; }
+        .section { display: none; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #007BFF; color: white; }
+        button { padding: 5px 10px; margin: 2px; cursor: pointer; }
+        input, select { padding: 5px; margin: 5px 0; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Welcome to Dashboard</h2>
-        <p id="welcome"></p>
-        <button onclick="logout()">Logout</button>
+<div class="container">
+    <h2>Welcome to Dashboard</h2>
+    <p id="welcome-msg"></p>
+
+    <!-- Admin Section -->
+    <div class="section" id="admin-section">
+        <h3>Admin Panel: Manage Users</h3>
+        <table id="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Change Role</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
-    <script>
-        // ---------- CHECK TOKEN ----------
-        const token = localStorage.getItem("token");
-        const user = JSON.parse(localStorage.getItem("user"));
+    <!-- Seller Section -->
+    <div class="section" id="seller-section">
+    
+        <!-- Seller Section -->
+    <div class="section" id="seller-section">
+    <h3>Seller Panel</h3>
+    <button onclick="window.location.href='seller_shops.html'">Manage My Shops</button>
+    </div>
 
-        if (!token || !user) {
-            alert("Session expired. Please login again.");
-            window.location.href = "/static/login.html";
-        } else {
-            document.getElementById("welcome").textContent =
-                `Hello, ${user.name}! Your email is ${user.email}`;
-        }
+    </div>
 
-        // ---------- LOGOUT ----------
-        function logout() {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            window.location.href = "/static/login.html";
+    <!-- Customer Section -->
+    <div class="section" id="customer-section">
+        <h3>Customer Panel: View Shops</h3>
+        <p>List of available shops will appear here in future updates.</p>
+    </div>
+
+    <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    if(!user || !token) window.location.href = "login.html";
+
+    document.getElementById("welcome-msg").textContent = `Hello, ${user.name} (${user.role})`;
+
+    // Show sections based on role
+    if(user.role === "admin") {
+        document.getElementById("admin-section").style.display = "block";
+        loadUsers(); // populate user table
+    }
+    if(user.role === "seller") document.getElementById("seller-section").style.display = "block";
+    if(user.role === "customer") document.getElementById("customer-section").style.display = "block";
+
+    function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "login.html";
+    }
+
+    async function loadUsers() {
+        try {
+            const res = await fetch("http://127.0.0.1:8000/users", {
+                headers: { 
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            if(!res.ok) throw new Error("Failed to fetch users");
+            const users = await res.json();
+            const tbody = document.querySelector("#user-table tbody");
+            tbody.innerHTML = "";
+            users.forEach(u => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${u.id}</td>
+                    <td>${u.name}</td>
+                    <td>${u.email}</td>
+                    <td>${u.role}</td>
+                    <td>
+                        <select id="role-${u.id}">
+                            <option value="customer" ${u.role==="customer"?"selected":""}>Customer</option>
+                            <option value="seller" ${u.role==="seller"?"selected":""}>Seller</option>
+                            <option value="admin" ${u.role==="admin"?"selected":""}>Admin</option>
+                        </select>
+                        <button onclick="changeRole(${u.id})">Update</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } catch(err) {
+            console.error(err);
+            alert("Error loading users: " + err.message);
         }
-    </script>
+    }
+
+    async function changeRole(userId) {
+        const select = document.getElementById(`role-${userId}`);
+        const newRole = select.value;
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/users/role/${userId}`, {
+                method: "PUT",
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ new_role: newRole })
+            });
+            const data = await res.json();
+            if(!res.ok) alert(data.detail || "Failed to update role");
+            else { alert(data.message); loadUsers(); }
+        } catch(err) {
+            console.error(err);
+            alert("Server error while changing role");
+        }
+    }
+</script>
+
 </body>
 </html>
