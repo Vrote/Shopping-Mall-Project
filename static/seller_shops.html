@@ -78,6 +78,7 @@
                 <td>
                     <button onclick="updateShop(${s.id})">Update</button>
                     <button onclick="deleteShop(${s.id})">Delete</button>
+                    <button onclick="goToProducts(${s.id})">Manage Products</button>
                 </td>
             `;
             tbody.appendChild(row);
@@ -111,6 +112,11 @@
             alert("Shop deleted!");
             loadMyShops();
         }
+    }
+
+    function goToProducts(shopId) {
+        // Pass shopId safely
+        window.location.href = `seller_products.html?shop_id=${encodeURIComponent(shopId)}`;
     }
 
     function logout() {

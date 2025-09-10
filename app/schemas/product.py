@@ -10,6 +10,7 @@ class ProductResponse(BaseModel):
     name: str
     price: int
     description: str | None
+    shop_id: int 
 
     class Config:
         orm_mode = True

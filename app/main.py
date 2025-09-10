@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app import database
 from app.models import user, shop
-from app.routes import user as user_routes, shop as shop_routes
+from app.routes import user as user_routes, shop as shop_routes, product as product_routes
 import os
 
 # Create database tables
@@ -25,6 +25,7 @@ app.add_middleware(
 # Include routers
 app.include_router(user_routes.router)
 app.include_router(shop_routes.router)
+app.include_router(product_routes.router)
 
 # Serve static files (CSS, JS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -43,6 +44,12 @@ def login_page():
 @app.get("/dashboard")
 def dashboard():
     return FileResponse(os.path.join("static", "dashboard.html"))
+
+
+@app.get("/seller_products")
+def seller_products_page():
+    return FileResponse("static/seller_products.html")
+
 
 
 # Root endpoint

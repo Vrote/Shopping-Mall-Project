@@ -11,5 +11,4 @@ class Product(Base):
     description = Column(String, nullable=True)
 
     shop_id = Column(Integer, ForeignKey("shops.id"))
-
     shop = relationship("Shop", back_populates="products")

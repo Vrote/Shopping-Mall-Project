@@ -11,4 +11,4 @@ class Shop(Base):
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="shops")
-    products = relationship("Product", back_populates="shop", cascade="all, delete-orphan")
+    products = relationship("Product", back_populates="shop")
